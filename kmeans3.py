@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.image as mpimg
 import os
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 
 def distEclud(vecA, vecB):
     res = []
@@ -33,7 +35,9 @@ def randCent(dataSet, k):
 def kMeans(dataSet, k):
     m = dataSet.shape[1]
     n = dataSet.shape[0]
+
     centroids = randCent(dataSet, k)
+
     court = 0
     while True:
         start = time.time()
@@ -42,17 +46,21 @@ def kMeans(dataSet, k):
         # 前2560为所有点到第一个中心的距离
         dataSet = np.array(dataSet)
         dist = distEclud(dataSet, centroids)
+
         dist = torch.Tensor(dist)
         label = dist.argmin(0)
-        dataSet = torch.Tensor(dataSet)
         # 找新中心
         label = label.unsqueeze(2)
-        data = torch.cat([dataSet, label], dim=2)
-        cmp_labels = label.expand(n, m, 4)
+        # data = torch.cat([dataSet, label], dim=2)
+        cmp_labels = label.expand(n, m, 3)
         oldCentroids = centroids.copy()
+        temp = []
+        dataSet = torch.Tensor(dataSet)
         for i in range(k):
-            a = torch.where(cmp_labels == i, data.type(torch.DoubleTensor), 0.0)
-            a = np.array(a)
+            a = torch.where(cmp_labels == i, dataSet.type(torch.DoubleTensor), 0.0)
+            centroidsT = torch.Tensor(centroids)
+            temp.append(torch.where(a != 0, centroidsT[i].type(torch.DoubleTensor), 0.0))
+            # a = np.array(a)
             num = 0
             den = 0
             for j in range(n):
@@ -66,22 +74,14 @@ def kMeans(dataSet, k):
         print(time.time() - start)
         if (oldCentroids == centroids).all():
             break
-    data = np.array(data)
-    for i in range(n):
-        for j in range(m):
-            for l in range(k):
-                if int(data[i][j][3]) == l:
-                    data[i][j][0] = centroids[l][0]
-                    data[i][j][1] = centroids[l][1]
-                    data[i][j][2] = centroids[l][2]
-    res = []
-    for i in range(n):
-        res.append(np.delete(data[i], -1, axis=1))
-    return np.array(res)
+    res = torch.zeros(n, m, 3)
+    for i in range(k):
+        res += temp[i]
+    return res.int()
 
 
 data = mpimg.imread('1.jpeg')
-img = kMeans(data, 4)
-img =np.array(img,dtype=int)
+img = kMeans(data, 20)
+
 plt.imshow(img)
 plt.show()
