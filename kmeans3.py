@@ -68,15 +68,17 @@ def kMeans(dataSet, k):
 
         if (oldCentroids == centroids).all():
             break
-    res = torch.zeros(n, m, 3)
-    for i in range(k):
-        res += temp[i]
+        res = torch.zeros(n, m, 3)
+        for i in range(k):
+            res += temp[i]
+        plt.imshow(res.int())
+        plt.show()
     return res.int()
 
 
 start = time.time()
 data = mpimg.imread('1.jpeg')
-img = kMeans(data, 2)
+img = kMeans(data, 10)
 
 plt.imshow(img)
 plt.show()
